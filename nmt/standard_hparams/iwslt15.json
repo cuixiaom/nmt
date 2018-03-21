@@ -23,7 +23,6 @@
   "residual": false,
   "share_vocab": false,
   "sos": "<s>",
-  "source_reverse": false,
   "src_max_len": 50,
   "src_max_len_infer": null,
   "start_decay_step": 8000,
