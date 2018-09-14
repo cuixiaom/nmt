@@ -28,6 +28,11 @@ from . import model_helper
 from .utils import iterator_utils
 from .utils import misc_utils as utils
 from .utils import vocab_utils
+from tensorflow.python.client import timeline
+import traceback
+import datetime
+
+infer_count = 0
 
 utils.check_tensorflow_version()
 
@@ -673,7 +678,24 @@ class BaseModel(object):
                                     infer_summary=self.infer_summary,
                                     sample_id=self.sample_id,
                                     sample_words=self.sample_words)
-    return sess.run(output_tuple)
+    run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
+    run_metadata = tf.RunMetadata()
+    #traceback.print_stack()
+    global infer_count
+    infer_count += 1
+    if (infer_count != -1):
+      utils.print_out("  In the infer func ************************************************ ")
+
+      result=sess.run(output_tuple, options=run_options, run_metadata=run_metadata)
+      tl = timeline.Timeline(run_metadata.step_stats)
+      ctf = tl.generate_chrome_trace_format()
+      timestamp=datetime.datetime.now().strftime("%H_%M_%S")
+      with open('decode'+str(infer_count)+'timeline.json', 'a') as f:
+          f.write(ctf)
+    else:
+      result=sess.run(output_tuple)
+
+    return result
 
   def decode(self, sess):
     """Decode a batch.

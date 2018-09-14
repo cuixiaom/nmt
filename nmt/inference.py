@@ -27,6 +27,7 @@ from . import model as nmt_model
 from . import model_helper
 from .utils import misc_utils as utils
 from .utils import nmt_utils
+from tensorflow.python.client import timeline
 
 __all__ = ["load_data", "inference",
            "single_worker_inference", "multi_worker_inference"]
@@ -154,12 +155,18 @@ def single_worker_inference(sess,
   infer_data = load_data(inference_input_file, hparams)
 
   with infer_model.graph.as_default():
+    run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
+    run_metadata = tf.RunMetadata()
     sess.run(
         infer_model.iterator.initializer,
         feed_dict={
             infer_model.src_placeholder: infer_data,
             infer_model.batch_size_placeholder: hparams.infer_batch_size
-        })
+        }, options=run_options, run_metadata=run_metadata)
+    tl = timeline.Timeline(run_metadata.step_stats)
+    ctf = tl.generate_chrome_trace_format()
+    with open('infer'+'_timeline.json', 'a') as f:
+        f.write(ctf)
     # Decode
     utils.print_out("# Start decoding")
     if hparams.inference_indices:
