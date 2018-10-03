@@ -518,7 +518,7 @@ def train(hparams, scope=None, target_session=""):
     ### Run a step ###
     start_time = time.time()
     try:
-      step_result = loaded_train_model.train(train_sess)
+      step_result = loaded_train_model.train(train_sess, global_step)
       hparams.epoch_step += 1
     except tf.errors.OutOfRangeError:
       # Finished going through the training dataset.  Go to next epoch.

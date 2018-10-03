@@ -329,7 +329,7 @@ class BaseModel(object):
         self.grad_norm_summary)
     return train_summary
 
-  def train(self, sess):
+  def train(self, sess, global_step):
     """Execute train graph."""
     assert self.mode == tf.contrib.learn.ModeKeys.TRAIN
     output_tuple = TrainOutputTuple(train_summary=self.train_summary,
@@ -340,7 +340,19 @@ class BaseModel(object):
                                     batch_size=self.batch_size,
                                     grad_norm=self.grad_norm,
                                     learning_rate=self.learning_rate)
-    return sess.run([self.update, output_tuple])
+    if (global_step % 100 != 0):
+      result = sess.run([self.update, output_tuple])
+    else:
+      run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
+      run_metadata = tf.RunMetadata()
+      result = sess.run([self.update, output_tuple],
+                     options=run_options, run_metadata=run_metadata)
+      tl = timeline.Timeline(run_metadata.step_stats)
+      ctf = tl.generate_chrome_trace_format()
+      with open('step'+str(global_step)+'_timeline.json', 'a') as f:
+            f.write(ctf)
+
+    return result
 
   def eval(self, sess):
     """Execute eval graph."""
