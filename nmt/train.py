@@ -501,11 +501,11 @@ def train(hparams, scope=None, target_session=""):
       os.path.join(out_dir, summary_name), train_model.graph)
 
   # First evaluation
-  run_full_eval(
-      model_dir, infer_model, infer_sess,
-      eval_model, eval_sess, hparams,
-      summary_writer, sample_src_data,
-      sample_tgt_data, avg_ckpts)
+#  run_full_eval(
+#      model_dir, infer_model, infer_sess,
+#      eval_model, eval_sess, hparams,
+#      summary_writer, sample_src_data,
+#      sample_tgt_data, avg_ckpts)
 
   last_stats_step = global_step
   last_eval_step = global_step
@@ -558,7 +558,7 @@ def train(hparams, scope=None, target_session=""):
       # Reset statistics
       stats = init_stats()
 
-    if global_step - last_eval_step >= steps_per_eval:
+    if global_step - last_eval_step >= 0:
       last_eval_step = global_step
       utils.print_out("# Save eval, global step %d" % global_step)
       add_info_summaries(summary_writer, global_step, info)
@@ -568,6 +568,8 @@ def train(hparams, scope=None, target_session=""):
           train_sess,
           os.path.join(out_dir, "translate.ckpt"),
           global_step=global_step)
+      tf.train.write_graph(train_sess.graph.as_graph_def(), '.', 'tensorflowModel.pbtxt', as_text=True)
+      exit ()
 
       # Evaluate on dev/test
       run_sample_decode(infer_model, infer_sess,
