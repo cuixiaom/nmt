@@ -102,6 +102,7 @@ def start_sess_and_load_model(infer_model, ckpt_path):
   with infer_model.graph.as_default():
     loaded_infer_model = model_helper.load_model(
         infer_model.model, ckpt_path, sess, "infer")
+    tf.train.write_graph(sess.graph.as_graph_def(), '.', 'gnmt_infermodel.pbtxt', as_text=True)
   return sess, loaded_infer_model
 
 
