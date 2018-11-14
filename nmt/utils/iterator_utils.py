@@ -85,9 +85,11 @@ def get_infer_iterator(src_dataset,
 
   batched_dataset = batching_func(src_dataset)
   batched_iter = batched_dataset.make_initializable_iterator()
+  #dataset_init_op = batched_iter.initializer
+  dataset_init_op = batched_iter.make_initializer(batched_dataset, name='dataset_init')
   (src_ids, src_seq_len) = batched_iter.get_next()
   return BatchedInput(
-      initializer=batched_iter.initializer,
+      initializer=dataset_init_op,
       source=src_ids,
       target_input=None,
       target_output=None,
