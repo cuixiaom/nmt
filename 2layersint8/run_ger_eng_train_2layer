@@ -1,0 +1,64 @@
+if [ -z "$1" ]
+  then echo "input the test dir name"
+  exit 1
+fi
+export KMP_BLOCKTIME=0
+export KMP_AFFINITY=granularity=fine,compact,1,0
+export OMP_NUM_THREADS=28
+
+export ROOTDIR=/mnt/nrvlab_300G_work01/cuixiaom
+export SCRIPTDIR=$PWD
+export host="$HOSTNAME"
+#check Test name
+#TSTname="${TSTNAME?"general"}"
+TSTname=$1
+export TRAINING_DATA_DIR=$ROOTDIR/Data/Nmt/Ger-Eng/Training/wmt16
+export NMT_DIR=/mnt/nrvlab_300G_work01/cuixiaom/Src/Nmt/cuixiaom_nmt_fork/nmt_int8
+mkdir /mnt/nrvlab_300G_work01/cuixiaom/Src/Nmt/cuixiaom_nmt_fork/nmt_int8/OUTPUT/"$1"
+export OUTPUT_DIR=/mnt/nrvlab_300G_work01/cuixiaom/Src/Nmt/cuixiaom_nmt_fork/nmt_int8/OUTPUT/$1
+
+declare -a root=("$ROOTDIR")
+interop=(2)
+intraop=(18)
+ompthreads=(20) 
+batchsize=(32)
+cores=(27)
+for ibatch in "${batchsize[@]}"; do
+for iinter in "${interop[@]}"; do
+for iintra in "${intraop[@]}"; do
+for iompth in "${ompthreads[@]}"; do
+
+  echo $(hostname):$SCRIPTDIR/${0##*/}>$OUTPUT_DIR/results_output
+  cat $SCRIPTDIR/${0##*/}>>$OUTPUT_DIR/results_output
+  #tfversion >>$OUTPUT_DIR/results_output
+  echo "     " >>$OUTPUT_DIR/results_output
+  echo "     " >>$OUTPUT_DIR/results_output
+  echo $PYTHONPATH>>$OUTPUT_DIR/results_output
+  echo $TEST_DIRNAME >>$OUTPUT_DIR/results_output
+  echo $OUTPUT_DIR >>$OUTPUT_DIR/results_output
+  echo $TRAINING_DATA_DIR >>$OUTPUT_DIR/results_output
+  echo $INFERENCE_DATA_DIR >>$OUTPUT_DIR/results_output
+  echo $NMT_DIR >>$OUTPUT_DIR/results_output
+  echo "     " >>$OUTPUT_DIR/results_output
+  echo "     " >>$OUTPUT_DIR/results_output
+
+  cd $NMT_DIR
+  export OMP_NUM_THREADS=$(($iompth))
+  python -m nmt.nmt \
+    --src=de --tgt=en \
+    --hparams_path=nmt/standard_hparams/wmt16_gnmt_2_layer.json \
+    --out_dir=$OUTPUT_DIR \
+    --vocab_prefix=$TRAINING_DATA_DIR/vocab.bpe.32000 \
+    --train_prefix=$TRAINING_DATA_DIR/train.tok.clean.bpe.32000 \
+    --dev_prefix=$TRAINING_DATA_DIR/newstest2013.tok.bpe.32000 \
+    --test_prefix=$TRAINING_DATA_DIR/newstest2015.tok.bpe.32000 \
+    --num_train_steps=2000 \
+    --num_inter_threads=$(($iinter)) \
+    --num_intra_threads=$(($iintra)) \
+    --num_gpus=0 \
+     |& tee -a $OUTPUT_DIR/results_output
+     echo "    "
+done
+done
+done
+done
