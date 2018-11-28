@@ -80,24 +80,27 @@ if __name__ == "__main__":
 
   # Read data
   infer_data = load_data(inference_input_file)
-  print(infer_data)
   batch_size = 32
 
   graph = load_graph(model_file)
   print(model_file)
+  print(infer_data)
   input_name0 = "import/" + input_layer0
   input_name1 = "import/" + input_layer1
   output_name = "import/" + output_layer
   output_operation = graph.get_operation_by_name(output_name);
   input_operation0 = graph.get_operation_by_name(input_name0);
   input_operation1 = graph.get_operation_by_name(input_name1);
+  dataset_init_op = graph.get_operation_by_name('dataset_init')
+
 
   config = tf.ConfigProto()
   config.inter_op_parallelism_threads = 1 
 
   t = 0.2
   with tf.Session(graph=graph, config=config) as sess:
-    results = sess.run(output_operation.outputs[0],
+#    results = sess.run(output_operation.outputs[0],
+    results = sess.run(dataset_init_op,
                       feed_dict={input_operation0.outputs[0]: infer_data,
                       input_operation1.outputs[0]: batch_size})
     print(results)
