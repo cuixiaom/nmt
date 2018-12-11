@@ -26,6 +26,7 @@ from . import gnmt_model
 from . import model as nmt_model
 from . import model_helper
 from .utils import misc_utils as utils
+from tensorflow.python.framework import graph_util
 from .utils import nmt_utils
 
 __all__ = ["load_data", "inference",
@@ -102,7 +103,11 @@ def start_sess_and_load_model(infer_model, ckpt_path):
   with infer_model.graph.as_default():
     loaded_infer_model = model_helper.load_model(
         infer_model.model, ckpt_path, sess, "infer")
-    tf.train.write_graph(sess.graph.as_graph_def(), '.', 'gnmt_infermodel.pbtxt', as_text=True)
+#    loaded_infer_model.saver.save(sess, "./translate_infer.ckpt")
+#    tf.train.write_graph(sess.graph.as_graph_def(), '.', 'gnmt_infermodel.pbtxt', as_text=True)
+    output_graph_def = graph_util.convert_variables_to_constants(sess,sess.graph.as_graph_def(),['index_to_string_Lookup'])
+    model_f = tf.gfile.GFile("constantmodel.pb","wb")
+    model_f.write(output_graph_def.SerializeToString())
   return sess, loaded_infer_model
 
 
@@ -161,6 +166,7 @@ def single_worker_inference(sess,
             infer_model.src_placeholder: infer_data,
             infer_model.batch_size_placeholder: hparams.infer_batch_size
         })
+#    print(infer_model.iterator.batcheddata)
     # Decode
     utils.print_out("# Start decoding")
     if hparams.inference_indices:
