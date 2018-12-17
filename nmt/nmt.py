@@ -621,8 +621,8 @@ def run_main(flags, default_hparams, train_fn, inference_fn, target_session=""):
   utils.print_out("# Job id %d" % jobid)
 
   # GPU device
-  utils.print_out(
-      "# Devices visible to TensorFlow: %s" % repr(tf.Session().list_devices()))
+#  utils.print_out(
+#      "# Devices visible to TensorFlow: %s" % repr(tf.Session().list_devices()))
 
   # Random
   random_seed = flags.random_seed
